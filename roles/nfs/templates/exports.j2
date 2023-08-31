@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+{% for dir in export_dirs %}
+{{ dir.dir | default(dir) }} *({{ dir.opts | default(default_export_opts) }})
+{% endfor %}
+
+# EOF

@@ -1,0 +1,7 @@
+---
+
+- name: 'reload nfs'
+  service:
+    name: nfs-kernel-server
+    state: reloaded
+    enabled: true

@@ -1,0 +1,11 @@
+---
+
+
+default_export_opts: 'rw,no_subtree_check,insecure,no_root_squash'
+
+# Directories to export. Can be a simple string with default opts applied, or an object with the
+#   directory and opts defined
+export_dirs:
+  - '/srv'
+  # - dir: '/srv/config'
+  #   opts: 'ro,no_root_squash'

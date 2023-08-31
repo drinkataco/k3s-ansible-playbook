@@ -1,0 +1,43 @@
+---
+
+- name: 'List available drives'
+  ansible.builtin.shell: 'blkid -s UUID -o value'
+  register: 'available_drives'
+
+- name: 'Drives to mount'
+  set_fact:
+    device_mounts: '{{ device_mounts + [item] }}'
+  loop: '{{ mounts }}'
+  when: 'item.uuid in available_drives.stdout_lines'
+
+- name: 'Devices to Mount'
+  debug:
+    var: 'device_mounts'
+
+- name: 'Mount Hardrives'
+  mount:
+    path: "{{ item.1.path | default('/mnt/disk-' + item.0 | string) }}"
+    src: 'UUID={{ item.1.uuid }}'
+    fstype: "{{ item.1.fstype | default('ext4') }}"
+    opts: "{{ item.1.opts | default('rw,nofail') }}"
+    state: 'mounted'
+  with_indexed_items: '{{ device_mounts }}'
+  register: 'mount_info'
+
+- name: 'Check if bind source exists'
+  stat:
+    path: '{{ item.0.name }}/{{ item.1.src }}'
+  with_nested:
+    - '{{ mount_info.results }}'
+    - '{{ binds }}'
+  register: 'bind_sources'
+
+- name: 'Cross mount binds'
+  mount:
+    path: '{{ item.item.1.dest }}'
+    src: '{{ item.item.0.name }}/{{ item.item.1.src }}'
+    state: 'mounted'
+    fstype: 'none'
+    opts: 'bind'
+  loop: '{{ bind_sources.results }}'
+  when: '{{ item.stat.exists }}'

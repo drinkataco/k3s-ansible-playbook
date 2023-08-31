@@ -1,0 +1,30 @@
+---
+
+# - name: 'Prerequisites'
+  # hosts: 'all'
+  # remote_user: '{{ ansible_user }}'
+  # become: true
+  # roles:
+    # - 'raspberrypi'
+
+- name: 'Set up fileserver'
+  hosts: 'fileserver'
+  remote_user: '{{ ansible_user }}'
+  become: true
+  roles:
+    - 'mounts'
+    - 'nfs'
+
+# - name: 'Configure K3 Master'
+  # hosts: 'master'
+  # remote_user: '{{ ansible_user }}'
+  # become: true
+  # roles:
+    # - 'k3s/master'
+
+# - name: 'Configure K3 Nodes'
+  # hosts: 'node'
+  # remote_user: '{{ ansible_user }}'
+  # become: true
+  # roles:
+    # - 'k3s/node'

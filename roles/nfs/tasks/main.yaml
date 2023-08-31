@@ -1,0 +1,21 @@
+---
+
+- name: 'Install NFS'
+  apt:
+    name: 'nfs-kernel-server'
+    state: 'present'
+    update_cache: true
+
+- name: 'Add NFS Exports'
+  template:
+    src: 'exports.j2'
+    dest: '/etc/exports'
+    owner: 'root'
+    group: 'root'
+    mode: '0777'
+  notify: 'reload nfs'
+  when: 'export_dirs is defined'
+
+- name: 'debug'
+  debug:
+    msg: '{{ export_dirs }}'

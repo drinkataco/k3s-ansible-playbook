@@ -1,0 +1,28 @@
+---
+
+# Mount rules for drives / directories
+# mount:
+# - uuid: '00000000-000A-0000-00AA-A0A000AA0000'
+#   path: '/mnt/Olsen' [OPTIONAL, DEFAULTS TO /mnt/disk-XX]
+#   fstype: 'ext4' [OPTIONAL, DEFAULTS TO ext4]
+#   opts: 'rw,nofail' [OPTIONAL, DEFAULTS TO rw,nofail]
+mounts: []
+
+
+# Bind mounts are useful for 'rewriting' paths for predictability - allowing for the preservation
+#   of a custom directory structure on a drive to a predictable pattern used by an nfs export, for
+#   example
+# The 'src' is in regards to the root of the mount, and the dest is the bind. If the src doesn't
+#   exist, the bind is ignored
+binds:
+  - src: 'config'
+    dest: '/srv/config'
+  - src: 'downloads'
+    dest: '/srv/downloads'
+  - src: 'film'
+    dest: '/srv/media/film'
+  - src: 'music'
+    dest: '/srv/media/music'
+  - src: 'television'
+    dest: '/srv/media/television'
+

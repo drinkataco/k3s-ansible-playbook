@@ -16,12 +16,11 @@
 - name: 'Unmount Drives'
   hosts: 'fileserver'
   become: true
-  roles:
-    - role: 'mounts'
-      vars:
-        state: 'absent'
+  tasks:
+    - name: 'Unmount all'
+      include_tasks: './roles/mounts/tasks/unmount.yaml'
 
-- name: 'Re enable swap'
+- name: 'Re-enable swap'
   hosts: 'all'
   become: true
   roles:

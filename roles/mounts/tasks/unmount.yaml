@@ -1,0 +1,19 @@
+---
+
+- name: 'Unmount all binds'
+  mount:
+    src: '{{ item[0].path }}/{{item[1].src}}'
+    path: '{{ item[1].dest }}'
+    state: 'absent'
+  with_nested:
+    - '{{ mounts }}'
+    - '{{ binds }}'
+
+- name: 'Unmount all drives'
+  mount:
+    path: "{{ item[1].path | default('/mnt/disk-' + item[0] | string) }}"
+    src: 'UUID={{ item[1].uuid }}'
+    fstype: "{{ item[1].fstype | default('ext4') }}"
+    opts: "{{ item[1].opts | default('rw,nofail') }}"
+    state: 'absent'
+  with_indexed_items: '{{ mounts }}'

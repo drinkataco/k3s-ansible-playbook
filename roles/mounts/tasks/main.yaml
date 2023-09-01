@@ -38,6 +38,6 @@
     src: '{{ item.item.0.name }}/{{ item.item.1.src }}'
     state: 'mounted'
     fstype: 'none'
-    opts: 'bind'
+    opts: 'bind,nofail'
   loop: '{{ bind_sources.results }}'
   when: '{{ item.stat.exists }}'

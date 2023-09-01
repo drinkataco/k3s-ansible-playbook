@@ -13,8 +13,8 @@
 
 - name: 'Read node-token from master'
   slurp:
-    src: /var/lib/rancher/k3s/server/node-token
-  register: node_token
+    src: '/var/lib/rancher/k3s/server/node-token'
+  register: 'node_token'
 
 - name: 'Store Master node-token'
   set_fact:
@@ -38,11 +38,11 @@
     dest: '~{{ ansible_user }}/.bashrc'
     line: 'export KUBECONFIG=$HOME/.kube/config'
     insertafter: 'EOF'
-    state: present
+    state: 'present'
 
-- name: 'Replace https://localhost:6443 by https://{{ master_ip }}:6443'
+- name: 'Replace https://localhost:6443 by https://{{ ansible_hostname }}:6443'
   command: 'k3s kubectl config set-cluster default
-      --server=https://{{ master_ip }}:6443
+      --server=https://{{ ansible_hostname }}:6443
       --kubeconfig ~{{ ansible_user }}/.kube/config'
   args:
     creates: '/usr/local/bin/k3s'

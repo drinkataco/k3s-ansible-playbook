@@ -1,7 +1,7 @@
 ---
 
 - name: 'List available drives'
-  ansible.builtin.shell: 'blkid -s UUID -o value'
+  shell: 'blkid -s UUID -o value'
   register: 'available_drives'
 
 - name: 'Drives to mount'

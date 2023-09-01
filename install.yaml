@@ -1,11 +1,11 @@
 ---
 
-# - name: 'Prerequisites'
-  # hosts: 'all'
-  # remote_user: '{{ ansible_user }}'
-  # become: true
-  # roles:
-    # - 'raspberrypi'
+- name: 'Prerequisites'
+  hosts: 'all'
+  remote_user: '{{ ansible_user }}'
+  become: true
+  roles:
+    - 'raspberrypi'
 
 - name: 'Set up fileserver'
   hosts: 'fileserver'

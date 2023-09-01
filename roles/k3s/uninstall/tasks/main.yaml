@@ -1,0 +1,21 @@
+---
+
+- name: 'Check that k3s uninstall script exists'
+  stat:
+    path: '/usr/local/bin/k3s-uninstall.sh'
+  register: 'k3s_uninstall'
+
+- name: 'Uninstall k3s'
+  become: true
+  raw: 'k3s-uninstall.sh'
+  when: 'k3s_uninstall.stat.exists'
+
+- name: 'Check that k3s agent uninstall script exists'
+  stat:
+    path: '/usr/local/bin/k3s-agent-uninstall.sh'
+  register: 'k3s_agent_uninstall'
+
+- name: 'Uninstall k3s agent'
+  become: true
+  raw: 'k3s-agent-uninstall.sh'
+  when: 'k3s_agent_uninstall.stat.exists'

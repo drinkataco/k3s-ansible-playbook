@@ -1,0 +1,22 @@
+---
+
+# - name: 'Remove K3s'
+  # hosts: 'k3s_cluster'
+  # become: true
+  # roles:
+    # 'k3s/uninstall'
+
+- name: 'Remove NFS server'
+  hosts: 'fileserver'
+  become: true
+  tasks:
+    - name: 'Remove NFS'
+      include_tasks: './roles/nfs/tasks/uninstall.yaml'
+
+- name: 'Unmount Drives'
+  hosts: 'fileserver'
+  become: true
+  roles:
+    - role: 'mounts'
+      vars:
+        state: 'absent'

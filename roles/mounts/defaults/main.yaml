@@ -3,6 +3,7 @@
 # @see /inventory/example/group_vars/fileserver.yaml to set this value to determine drive mounts
 mounts: []
 binds: []
+state: 'mounted'
 
 # These variables are worked out programmatically
 device_mounts: []

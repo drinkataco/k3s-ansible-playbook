@@ -20,7 +20,7 @@
     src: 'UUID={{ item.1.uuid }}'
     fstype: "{{ item.1.fstype | default('ext4') }}"
     opts: "{{ item.1.opts | default('rw,nofail') }}"
-    state: 'mounted'
+    state: '{{ state }}'
   with_indexed_items: '{{ device_mounts }}'
   register: 'mount_info'
 
@@ -36,8 +36,8 @@
   mount:
     path: '{{ item.item.1.dest }}'
     src: '{{ item.item.0.name }}/{{ item.item.1.src }}'
-    state: 'mounted'
+    state: '{{ state }}'
     fstype: 'none'
     opts: 'bind,nofail'
   loop: '{{ bind_sources.results }}'
-  when: '{{ item.stat.exists }}'
+  when: state == 'absent' or item.stat.exists

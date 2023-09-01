@@ -1,0 +1,11 @@
+---
+
+- name: 'Uninstall NFS'
+  apt:
+    name: 'nfs-kernel-server'
+    state: 'absent'
+
+- name: 'Remove exports file'
+  file:
+    path: /etc/exports
+    state: 'absent'

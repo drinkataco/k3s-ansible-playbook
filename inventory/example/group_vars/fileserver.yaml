@@ -26,3 +26,6 @@ binds:
   - src: 'television'
     dest: '/srv/media/television'
 
+# Directories to export with NFS
+export_dirs:
+  - '/srv'

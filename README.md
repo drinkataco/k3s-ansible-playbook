@@ -8,6 +8,7 @@ Build a server cluster on your Raspberry Pi (singular or plural), as well as man
   * [Getting Started](#getting-started)
   * [Deploying](#deploying)
   * [Post Deployment](#post-deployment)
+* [Next Steps](#next-steps)
 <!-- vim-md-toc END -->
 
 ## Requirements
@@ -33,14 +34,18 @@ cp -Rv ./inventory/example ./inventory/your-cluster
 
 Once copied, you should edit the hosts.ini file to change the hosts to yours (by hostname or IP address).
 
-It is worth to modify the variables if needed within the group_vars directory. It is worth having a look at all the variables, but here are the ones most probable of adjustment:
+Some useful variables to modify:
 
-- [group_vars/all.yaml](./inventory/example/group_vars/all.yaml)
+- group_vars/all.yaml
     - `ansible_user` - `pi` is the default username for Raspberry Pi OS
-- [group_vars/fileserver.yaml](./inventory/example/group_vars/fileserver.yaml)
+- group_vars/fileserver.yaml
     - `mounts` - these are any drives you want to mount to the Pi
     - `binds` - these are cross-mounts that allow us to export with nfs in a predictable format from the mounted drives without having to adhere to a particular format at source.
     - `export_dirs` - directries to export with NFS
+- group_vars/k3s_cluster.yaml
+    - `k3s_install_args` - anything to pass to the `INSTALL_K3S_EXEC` variable when installing the server, for example `--disable=traefik` if you wanted to manage traefik outside of k3s. Consult [K3s documentation](https://docs.k3s.io/installation/configuration) for more on this value.
+
+It is worth looking at the variable files themselves to see all possible config and values.
 
 ### Deploying
 
@@ -86,3 +91,9 @@ starr       Ready    <none>                 2m36s   v1.27.4+k3s1
 ```
 
 To check your drives are available over NFS, use `showmount -e` on the machine, or `showmount -e fileserverhostname` on an external machine on the same network.
+
+## Next Steps
+
+Check out the sister project [home-server-kubernetes](https://github.com/drinkataco/home-server-kubernetes) for home server related resources to deploy to your cluster.
+
+

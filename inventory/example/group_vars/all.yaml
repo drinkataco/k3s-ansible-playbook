@@ -1,6 +1,8 @@
-k3s_version: 'v1.27.4+k3s1'
-ansible_user: 'aedd'
+ansible_user: 'pi'
 systemd_dir: '/etc/systemd/system'
+
+k3s_version: 'v1.27.4+k3s1'
+k3s_install_args: ''
+
 master_ip: '{{ hostvars[groups["master"][0]]["ansible_host"] |
   default(groups["master"][0]) }}'
-extra_server_args: ''

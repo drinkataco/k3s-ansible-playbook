@@ -5,6 +5,6 @@
   raw: 'curl -sfL https://get.k3s.io | K3S_URL=https://{{ master_ip }}:6443 \
     K3S_TOKEN={{ hostvars[groups["master"][0]]["token"] }} \
     INSTALL_K3S_VERSION={{ k3s_version }} \
-     sh -'
+    INSTALL_K3S_EXEC="{{ k3s_install_args }}" sh -'
   args:
     creates: '/usr/local/bin/k3s'

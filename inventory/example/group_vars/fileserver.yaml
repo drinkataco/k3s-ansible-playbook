@@ -8,7 +8,6 @@
 #   opts: 'rw,nofail' [OPTIONAL, DEFAULTS TO rw,nofail]
 mounts: []
 
-
 # Bind mounts are useful for 'rewriting' paths for predictability - allowing for the preservation
 #   of a custom directory structure on a drive to a predictable pattern used by an nfs export, for
 #   example
@@ -26,6 +25,11 @@ binds:
   - src: 'television'
     dest: '/srv/media/television'
 
-# Directories to export with NFS
+# Directories/Mountpoints to export with NFS
 export_dirs:
   - '/srv'
+  - '/srv/config'
+  - '/srv/downloads'
+  - '/srv/media/film'
+  - '/srv/media/music'
+  - '/srv/media/television'

@@ -6,6 +6,20 @@
     state: 'present'
     update_cache: true
 
+- name: 'Check if export exists as path'
+  stat:
+    path: item.dir | default(item)
+  loop: '{{ export_dirs }}'
+  register: 'export_sources_path'
+  when: export_dirs is defined
+
+- name: 'Check if export exists as mountpoint'
+  command: mountpoint -q "{{ item }}"
+  loop: '{{ export_dirs }}'
+  register: 'export_sources_mount'
+  when: export_dirs is defined
+  ignore_errors: true  # Ignore errors for non-mount points
+
 - name: 'Add NFS Exports'
   template:
     src: 'exports.j2'

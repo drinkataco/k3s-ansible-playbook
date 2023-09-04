@@ -32,7 +32,3 @@
     valid_dirs: '{{ export_sources_path.results }}'
   notify: 'reload nfs'
   when: 'export_dirs is defined'
-
-- name: 'debug'
-  debug:
-    msg: '{{ export_dirs }}'

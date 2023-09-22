@@ -32,18 +32,18 @@ First, we need to create inventory for the playbook.
 cp -Rv ./inventory/example ./inventory/your-cluster
 ```
 
-Once copied, you should edit the hosts.ini file to change the hosts to yours (by hostname or IP address).
+In this newly created directory we need to edit the `./inventory/your-cluster/hosts.ini` file to assign roles to devices. You can either use hostnames, or IP addresses.
+
+In the `./inventory/your-cluster/group_vars/` directory exists two files containing host specific configuration.
 
 Some useful variables to modify:
 
-- group_vars/all.yaml
+- all.yaml
     - `ansible_user` - `pi` is the default username for Raspberry Pi OS
-- group_vars/fileserver.yaml
-    - `mounts` - these are any drives you want to mount to the Pi
-    - `binds` - these are cross-mounts that allow us to export with nfs in a predictable format from the mounted drives without having to adhere to a particular format at source.
-    - `export_dirs` - directries to export with NFS
-- group_vars/k3s_cluster.yaml
     - `k3s_install_args` - anything to pass to the `INSTALL_K3S_EXEC` variable when installing the server, for example `--disable=traefik` if you wanted to manage traefik outside of k3s. Consult [K3s documentation](https://docs.k3s.io/installation/configuration) for more on this value.
+- fileserver.yaml
+    - `mounts` - these are any drives you want to mount to the Pi
+    - `export_dirs` - directories to export with NFS
 
 It is worth looking at the variable files themselves to see all possible config and values.
 
@@ -89,8 +89,6 @@ lennon      Ready    <none>                 2m20s   v1.27.4+k3s1
 harrison    Ready    <none>                 2m20s   v1.27.4+k3s1
 starr       Ready    <none>                 2m36s   v1.27.4+k3s1
 ```
-
-To check your drives are available over NFS, use `showmount -e` on the machine, or `showmount -e fileserverhostname` on an external machine on the same network.
 
 ## Next Steps
 

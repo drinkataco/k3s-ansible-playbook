@@ -1,8 +1,8 @@
-ansible_user: 'pi'
+ansible_user: 'pi' # Default raspberrypi username
 systemd_dir: '/etc/systemd/system'
 
 k3s_version: 'v1.27.4+k3s1'
-k3s_install_args: ''
+k3s_install_args: '' # any installation arguments for the master node
 
 master_ip: '{{ hostvars[groups["master"][0]]["ansible_host"] |
   default(groups["master"][0]) }}'

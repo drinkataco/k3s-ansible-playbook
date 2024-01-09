@@ -78,11 +78,7 @@
     insertafter: 'EOF'
     state: 'present'
 
-# todo: this isn't working
 - name: 'Replace https://localhost:6443 by https://{{ ansible_hostname }}:6443'
-  become: false
   command: 'k3s kubectl config set-cluster default
       --server=https://{{ ansible_hostname }}:6443
       --kubeconfig ~{{ ansible_user }}/.kube/config'
-  args:
-    creates: '/usr/local/bin/k3s'

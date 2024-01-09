@@ -9,9 +9,9 @@
     device_mounts: "{{ device_mounts +
         [item | combine(
           {
-            'path': (item.path | default('/mnt/disk-' + loop_index | string)),
-            'fstype': (item.fstype | default('ext4')),
-            'opts': (item.opts | default('rw,nofail')),
+            'path': (item.path | default(default_mount_path_prefix + loop_index | string)),
+            'fstype': (item.fstype | default(default_mount_filesystem)),
+            'opts': (item.opts | default(default_mount_opts))
           }
         )]
       }}"

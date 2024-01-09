@@ -26,5 +26,9 @@ mounts: []
 binds: []
 
 # Directories/Mountpoints to export with NFS
-export_dirs:
-  - '/srv'
+# export_dirs:
+#   - path: '/srv'
+#     hosts: '*' # [OPTIONAL, DEFAULTS TO *]
+#     opts: 'rw,no_subtree_check,sync,insecure,no_root_squash' # [OPTIONAL, DEFAULTS TO VALUE]
+#   - path: '/srv/media'
+export_dirs: []

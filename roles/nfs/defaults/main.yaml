@@ -1,7 +1,9 @@
 ---
 
 default_export_opts: 'rw,no_subtree_check,sync,insecure,no_root_squash'
+default_export_host: '*'
 
 # Directories/Mountpoints to export
-export_dirs:
-  - '/srv'
+export_dirs: []
+valid_export_dirs: []
+template_exports: []

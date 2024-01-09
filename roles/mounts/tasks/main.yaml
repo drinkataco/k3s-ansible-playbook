@@ -26,16 +26,14 @@
 
 - name: 'Check if bind source exists'
   stat:
-    path: '{{ item[0].name }}/{{ item[1].src }}'
-  with_nested:
-    - '{{ mount_info.results }}'
-    - '{{ binds }}'
+    path: '{{ item.src }}'
+  loop: '{{ binds }}'
   register: 'bind_sources'
 
 - name: 'Cross mount binds'
   mount:
-    path: '{{ item.item[1].dest }}'
-    src: '{{ item.item[0].name }}/{{ item.item[1].src }}'
+    path: '{{ item.item.dest }}'
+    src: '{{ item.item.src }}'
     state: 'mounted'
     fstype: 'none'
     opts: 'bind,nofail'

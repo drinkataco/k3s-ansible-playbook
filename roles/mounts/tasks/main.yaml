@@ -4,24 +4,44 @@
   shell: 'blkid -s UUID -o value'
   register: 'available_drives'
 
-- name: 'Drives to mount'
+- name: 'Get mountable drives and set default values'
   set_fact:
-    device_mounts: '{{ device_mounts + [item] }}'
+    device_mounts: "{{ device_mounts +
+        [item | combine(
+          {
+            'path': (item.path | default('/mnt/disk-' + loop_index | string)),
+            'fstype': (item.fstype | default('ext4')),
+            'opts': (item.opts | default('rw,nofail')),
+          }
+        )]
+      }}"
   loop: '{{ mounts }}'
+  loop_control:
+    index_var: 'loop_index'
   when: 'item.uuid in available_drives.stdout_lines'
 
 - name: 'Devices to Mount'
   debug:
     var: 'device_mounts'
 
+- name: 'Ensure mount point directory exists'
+  file:
+    path: "{{ item.path }}"
+    state: 'directory'
+  loop: '{{ device_mounts }}'
+
+- name: 'Ensure mount point directory is immutable'
+  command: 'chattr +i {{ item.path }}'
+  loop: '{{ device_mounts }}'
+
 - name: 'Mount Hardrives'
   mount:
-    path: "{{ item[1].path | default('/mnt/disk-' + item[0] | string) }}"
-    src: 'UUID={{ item[1].uuid }}'
-    fstype: "{{ item[1].fstype | default('ext4') }}"
-    opts: "{{ item[1].opts | default('rw,nofail') }}"
+    path: '{{ item.path }}'
+    src: 'UUID={{ item.uuid }}'
+    fstype: '{{ item.fstype }}'
+    opts: '{{ item.opts }}'
     state: 'mounted'
-  with_indexed_items: '{{ device_mounts }}'
+  loop: '{{ device_mounts }}'
   register: 'mount_info'
 
 - name: 'Check if bind source exists'
@@ -38,4 +58,4 @@
     fstype: 'none'
     opts: 'bind,nofail'
   loop: '{{ bind_sources.results }}'
-  when: item.stat.exists
+  when: 'item.stat.exists'

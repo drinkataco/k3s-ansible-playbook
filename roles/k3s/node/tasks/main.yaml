@@ -1,10 +1,15 @@
 ---
 
+- name: 'Set High Availability K3s cluster command if appropriate'
+  set_fact:
+    ha_node: 'sh -s - agent --server https://{{ groups["master"][0] }}:6443'
+  when: '(groups["master"] | length) > 1'
+
 - name: 'Install k3s'
   become: true
-  raw: 'curl -sfL https://get.k3s.io | K3S_URL=https://{{ master_ip }}:6443 \
+  raw: 'curl -sfL https://get.k3s.io | K3S_URL=https://{{ groups["master"][0] }}:6443 \
     K3S_TOKEN={{ hostvars[groups["master"][0]]["token"] }} \
     INSTALL_K3S_VERSION={{ k3s_version }} \
-    sh -'
+    {{ ha_node | default("sh -") }}'
   args:
     creates: '/usr/local/bin/k3s'

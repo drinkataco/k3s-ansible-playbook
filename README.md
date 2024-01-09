@@ -45,7 +45,7 @@ Some useful variables to modify:
     - `mounts` - these are any drives you want to mount to the Pi
     - `export_dirs` - directories to export with NFS
 
-It is worth looking at the variable files themselves to see all possible config and values.
+It is worth looking at the variable files themselves to see all possible config and values, which includes a lot of documentation in the comments.
 
 ### Deploying
 

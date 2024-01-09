@@ -2,7 +2,7 @@ ansible_user: 'pi' # Default raspberrypi username
 systemd_dir: '/etc/systemd/system'
 
 k3s_version: 'v1.29.0+k3s1 ' # latest (as of this commit) version of K3s
-k3s_install_args: '' # any installation arguments for the master node
+k3s_install_args: '--disable=traefik --kubelet-arg system-reserved=cpu=500m,memory=500Mi --kubelet-arg kube-reserved=cpu=500m,memory=500Mi' # any installation arguments for the master node(s)
 
 master_ip: '{{ hostvars[groups["master"][0]]["ansible_host"] |
   default(groups["master"][0]) }}'

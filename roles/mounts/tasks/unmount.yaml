@@ -9,11 +9,43 @@
     - '{{ mounts }}'
     - '{{ binds }}'
 
+- name: 'Load default mount variables'
+  include_vars:
+    file: '../defaults/main.yaml'
+    name: 'mount_vars'
+
+- name: 'List available drives'
+  shell: 'blkid -s UUID -o value'
+  register: 'available_drives'
+
+- name: 'Get mountable drives and set default values'
+  set_fact:
+    device_mounts: "{{ device_mounts | default([]) +
+        [item | combine(
+          {
+            'path': (item.path | default(mount_vars.default_mount_path_prefix + loop_index | string)),
+          }
+        )]
+      }}"
+  loop: '{{ mounts }}'
+  loop_control:
+    index_var: 'loop_index'
+  when: 'item.uuid in available_drives.stdout_lines'
+
 - name: 'Unmount all drives'
   mount:
-    path: "{{ item[1].path | default('/mnt/disk-' + item[0] | string) }}"
-    src: 'UUID={{ item[1].uuid }}'
-    fstype: "{{ item[1].fstype | default('ext4') }}"
-    opts: "{{ item[1].opts | default('rw,nofail') }}"
+    path: '{{ item.path }}'
+    state: 'unmounted'
+  loop: '{{ device_mounts }}'
+
+- name: 'Ensure mount point directory is no longer immutable'
+  command: '/bin/bash -c "[ -d {{ item.path }} ] && chattr -i {{ item.path }}"'
+  loop: '{{ device_mounts }}'
+
+- name: "Make sure drives are absent and won't be remounted"
+  mount:
+    path: "{{ item.path | default(mount_vars.default_mount_path_prefix + loop_index | string) }}"
     state: 'absent'
-  with_indexed_items: '{{ mounts }}'
+  loop: '{{ mounts }}'
+  loop_control:
+    index_var: 'loop_index'

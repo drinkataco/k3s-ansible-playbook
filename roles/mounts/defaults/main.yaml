@@ -1,5 +1,9 @@
 ---
 
+default_mount_path_prefix: '/mnt/disk-'
+default_mount_filesystem: 'ext4'
+default_mount_opts: 'rw,nofail'
+
 # @see /inventory/example/group_vars/fileserver.yaml to set this value to determine drive mounts
 mounts: []
 binds: []

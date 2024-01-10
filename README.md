@@ -1,6 +1,8 @@
 # Build a File Server and Kubernetes Cluster
 
-Build a server cluster on your Raspberry Pi (singular or plural), as well as managing volume mounts and exports.
+![Ansible](https://github.com/drinkataco/home-server-ansible/actions/workflows/ansible-lint.yaml/badge.svg)
+
+Build a high availability kubernetes cluster on your Raspberry Pi computers with K3s, as well as managing volume mounts and exports.
 
 <!-- vim-md-toc format=bullets ignore=^TODO$ -->
 * [Requirements](#requirements)
@@ -13,7 +15,7 @@ Build a server cluster on your Raspberry Pi (singular or plural), as well as man
 
 ## Requirements
 
-It is recommended that you have at least 1x Raspberry Pi 3b, although it is recommended to use a Pi 4 with an [SSD for boot](https://www.makeuseof.com/boot-raspberry-pi-4-via-ssd-network/).
+It is recommended that you have at least 1x Pi 4, although it is recommended to use a Pi 5 with an [SSD or NVMe for boot](https://www.makeuseof.com/boot-raspberry-pi-4-via-ssd-network/).
 
 Before running this playbook it is also assumed that:
 
@@ -32,7 +34,7 @@ First, we need to create inventory for the playbook.
 cp -Rv ./inventory/example ./inventory/your-cluster
 ```
 
-In this newly created directory we need to edit the `./inventory/your-cluster/hosts.ini` file to assign roles to devices. You can either use hostnames, or IP addresses.
+In this newly created directory we need to edit the `./inventory/your-cluster/hosts.ini` file to assign roles to devices. You can either use hostnames, or IP addresses. By adding multiple master hosts you can enable a high availability cluster to be provisioned.
 
 In the `./inventory/your-cluster/group_vars/` directory exists two files containing host specific configuration.
 
@@ -45,7 +47,7 @@ Some useful variables to modify:
     - `mounts` - these are any drives you want to mount to the Pi
     - `export_dirs` - directories to export with NFS
 
-It is worth looking at the variable files themselves to see all possible config and values.
+It is worth looking at the variable files themselves to see all possible config and values, which includes a lot of documentation in the comments.
 
 ### Deploying
 

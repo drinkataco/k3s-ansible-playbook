@@ -1,35 +1,29 @@
 ---
 
 # Mount rules for drives / directories
-# mount:
+# mounts:
 # - uuid: '00000000-000A-0000-00AA-A0A000AA0000'
-#   path: '/mnt/Olsen' [OPTIONAL, DEFAULTS TO /mnt/disk-XX]
+#   path: '/srv' [OPTIONAL, DEFAULTS TO /mnt/disk-XX]
 #   fstype: 'ext4' [OPTIONAL, DEFAULTS TO ext4]
 #   opts: 'rw,nofail' [OPTIONAL, DEFAULTS TO rw,nofail]
 mounts: []
 
-# Bind mounts are useful for 'rewriting' paths for predictability - allowing for the preservation
-#   of a custom directory structure on a drive to a predictable pattern used by an nfs export, for
-#   example
-# The 'src' is in regards to the root of the mount, and the dest is the bind. If the src doesn't
-#   exist, the bind is ignored
-binds:
-  - src: 'config'
-    dest: '/srv/config'
-  - src: 'downloads'
-    dest: '/srv/downloads'
-  - src: 'film'
-    dest: '/srv/media/film'
-  - src: 'music'
-    dest: '/srv/media/music'
-  - src: 'television'
-    dest: '/srv/media/television'
-
 # Directories/Mountpoints to export with NFS
-export_dirs:
-  - '/srv'
-  - '/srv/config'
-  - '/srv/downloads'
-  - '/srv/media/film'
-  - '/srv/media/music'
-  - '/srv/media/television'
+# export_dirs:
+#   - path: '/srv'
+#     hosts: '*' # [OPTIONAL, DEFAULTS TO *]
+#     opts: 'rw,no_subtree_check,sync,insecure,no_root_squash' # [OPTIONAL, DEFAULTS TO VALUE]
+#   - path: '/srv/media'
+export_dirs: []
+
+# Binds are useful for merging directories from multiple drives into a single directory.
+#   This allows nfs exports to be more predictable, and allows external storage locations to be
+#   changed more easily (such as when upgrading drives, or adding a new one)
+# Note: Due to how NFS works, any bind must be added to export_dirs to allow this drive being exported
+# binds:
+#   - src: '/mnt/d1/config' # The source of the bind
+#     dest: '/srv/config' # The destination
+#   - src: '/mnt/d2/downloads'
+#     dest: '/srv/downloads'
+binds: []
+

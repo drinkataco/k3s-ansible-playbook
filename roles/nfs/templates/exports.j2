@@ -1,17 +1,8 @@
 # {{ ansible_managed }}
 
-# Mountpoint exports (for binds)
-{% for item in valid_mounts %}
-{% if item.failed == false %}
-{{ item.cmd[2] }} *({{default_export_opts}})
-{% endif %}
-{% endfor %}
-
 # Path exports
-{% for item in valid_dirs %}
-{% if item.stat.exists %}
-{{ item.item }} *({{default_export_opts}})
-{% endif %}
+{% for item in dirs %}
+{{ item.path }} {{ item.hosts }}({{ item.opts }})
 {% endfor %}
 
 # EOF

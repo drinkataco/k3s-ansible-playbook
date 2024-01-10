@@ -17,6 +17,7 @@
 
 - name: 'Configure K3 Master'
   hosts: 'master'
+  serial: 1
   remote_user: '{{ ansible_user }}'
   become: true
   roles:

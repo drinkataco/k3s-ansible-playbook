@@ -1,24 +1,62 @@
 ---
 
-- name: 'Install k3s'
+- name: 'Set master count'
+  set_fact:
+    host_count: '{{ groups["master"] | length }}'
+
+- name: 'Check quoram met for High Availability clusters'
+  assert:
+    that:
+      # - "{{ (host_count | int) > 1 and (host_count | int) % 2 != 0 }}"
+      - "{{ (host_count | int) <= 1 or ((host_count | int) > 1 and (host_count | int) % 2 != 0) }}"
+    fail_msg: 'With high availability clusters you must have an odd quoram!'
+
+- name: 'Set High Availability K3s cluster command if appropriate'
+  set_fact:
+    ha_server: 'sh -s - server --cluster-init'
+  when: '(host_count | int) > 1'
+
+- name: 'Install K3s on the first master'
   raw: 'curl -sfL https://get.k3s.io | \
     INSTALL_K3S_VERSION={{ k3s_version }} \
-    INSTALL_K3S_EXEC="{{ k3s_install_args }}" sh -'
+    INSTALL_K3S_EXEC="{{ k3s_install_args }}" \
+    {{ ha_server | default("sh -") }}
+    '
   args:
     creates: '/usr/local/bin/k3s'
+  when: "inventory_hostname == groups['master'][0]"
+
+- name: 'Get K3s token from the first master'
+  shell: 'cat /var/lib/rancher/k3s/server/node-token'
+  register: 'k3s_token'
+  when: "inventory_hostname == groups['master'][0]"
 
 - name: 'Wait for node-token'
   wait_for:
     path: '/var/lib/rancher/k3s/server/node-token'
+  when: "inventory_hostname == groups['master'][0]"
 
 - name: 'Read node-token from master'
   slurp:
     src: '/var/lib/rancher/k3s/server/node-token'
-  register: 'node_token'
+  register: 'k3s_token'
+  when: "inventory_hostname == groups['master'][0]"
 
 - name: 'Store Master node-token'
   set_fact:
-    token: '{{ node_token.content | b64decode | regex_replace("\n", "") }}'
+    token: '{{ k3s_token.content | b64decode | regex_replace("\n", "") }}'
+  when: "inventory_hostname == groups['master'][0]"
+
+- name: 'Install K3s on the other masters (if HA)'
+  raw: 'curl -sfL https://get.k3s.io | \
+    K3S_TOKEN={{ hostvars[groups["master"][0]]["token"] }} \
+    INSTALL_K3S_VERSION={{ k3s_version }} \
+    INSTALL_K3S_EXEC="{{ k3s_install_args }}" sh -s - \
+    server --server https://{{ groups["master"][0] }}:6443
+    '
+  args:
+    creates: '/usr/local/bin/k3s'
+  when: "inventory_hostname != groups['master'][0]"
 
 - name: 'Create directory .kube'
   file:
@@ -40,11 +78,7 @@
     insertafter: 'EOF'
     state: 'present'
 
-# todo: this isn't working
 - name: 'Replace https://localhost:6443 by https://{{ ansible_hostname }}:6443'
-  become: false
   command: 'k3s kubectl config set-cluster default
       --server=https://{{ ansible_hostname }}:6443
       --kubeconfig ~{{ ansible_user }}/.kube/config'
-  args:
-    creates: '/usr/local/bin/k3s'

@@ -1,5 +1,7 @@
 # Build a File Server and Kubernetes Cluster
 
+![Ansible](https://github.com/drinkataco/home-server-ansible/actions/workflows/ansible-lint.yaml/badge.svg)
+
 Build a high availability kubernetes cluster on your Raspberry Pi computers with K3s, as well as managing volume mounts and exports.
 
 <!-- vim-md-toc format=bullets ignore=^TODO$ -->

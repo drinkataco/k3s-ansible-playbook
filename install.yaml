@@ -22,7 +22,6 @@
   become: true
   roles:
     - 'k3s/master'
-    - 'k3s/post'
 
 - name: 'Configure K3 Nodes'
   hosts: 'node'
@@ -30,4 +29,3 @@
   become: true
   roles:
     - 'k3s/node'
-    - 'k3s/post'

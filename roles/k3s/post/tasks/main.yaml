@@ -1,7 +1,0 @@
----
-
-- name: 'Add labels to all machines'
-  shell: 'kubectl label nodes {{ item }} type=pi'
-  loop: "{{ groups['k3s_cluster'] }}"
-  when: "inventory_hostname == groups['master'][0]"
-

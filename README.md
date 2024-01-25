@@ -51,7 +51,9 @@ It is worth looking at the variable files themselves to see all possible config 
 
 ### Deploying
 
-You can deploy your cluster using the following command
+Install module requirements with `ansible-galaxy collection install -r requirements.yaml`
+
+You can then deploy your cluster using the following command
 
 ```bash
 ansible-playbook -i inventory/your-cluster install.yaml

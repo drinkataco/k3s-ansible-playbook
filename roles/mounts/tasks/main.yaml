@@ -35,7 +35,7 @@
   loop: '{{ device_mounts }}'
 
 - name: 'Mount Hardrives'
-  mount:
+  ansible.posix.mount:
     path: '{{ item.path }}'
     src: 'UUID={{ item.uuid }}'
     fstype: '{{ item.fstype }}'
@@ -51,7 +51,7 @@
   register: 'bind_sources'
 
 - name: 'Cross mount binds'
-  mount:
+  ansible.posix.mount:
     path: '{{ item.item.dest }}'
     src: '{{ item.item.src }}'
     state: 'mounted'

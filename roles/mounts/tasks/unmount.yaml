@@ -1,7 +1,7 @@
 ---
 
 - name: 'Unmount all binds'
-  mount:
+  ansible.posix.mount:
     src: '{{ item[0].path }}/{{item[1].src}}'
     path: '{{ item[1].dest }}'
     state: 'absent'
@@ -33,7 +33,7 @@
   when: 'item.uuid in available_drives.stdout_lines'
 
 - name: 'Unmount all drives'
-  mount:
+  ansible.posix.mount:
     path: '{{ item.path }}'
     state: 'unmounted'
   loop: '{{ device_mounts }}'
@@ -43,7 +43,7 @@
   loop: '{{ device_mounts }}'
 
 - name: "Make sure drives are absent and won't be remounted"
-  mount:
+  ansible.posix.mount:
     path: "{{ item.path | default(mount_vars.default_mount_path_prefix + loop_index | string) }}"
     state: 'absent'
   loop: '{{ mounts }}'

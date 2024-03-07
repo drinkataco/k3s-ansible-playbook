@@ -1,0 +1,16 @@
+---
+
+- name: 'Label Kubernetes nodes'
+  when: inventory_hostname == groups['master'][0]
+  ansible.builtin.shell:
+    cmd: |
+      kubectl label nodes {{ item.key }} model={{ item.value.model }} storage={{ item.value.storage }} --overwrite
+  loop: "{{ lookup('dict', labels) }}"
+  loop_control:
+    label: '{{ item.key }}'
+
+- name: 'Taint Kubernetes nodes'
+  when: inventory_hostname == groups['master'][0]
+  ansible.builtin.shell:
+    cmd: "kubectl taint nodes {{ item.host }} {{ item.key }}{{ item.operator }}{{ item.value }}:{{ item.effect }} --overwrite"
+  loop: "{{ taints }}"

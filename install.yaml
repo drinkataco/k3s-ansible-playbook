@@ -29,3 +29,10 @@
   become: true
   roles:
     - 'k3s/node'
+
+- name: 'Label K3 Nodes'
+  hosts: 'master'
+  remote_user: '{{ ansible_user }}'
+  become: true
+  roles:
+    - 'k3s/label'

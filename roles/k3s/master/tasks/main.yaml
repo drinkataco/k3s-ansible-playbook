@@ -7,7 +7,6 @@
 - name: 'Check quoram met for High Availability clusters'
   assert:
     that:
-      # - "{{ (host_count | int) > 1 and (host_count | int) % 2 != 0 }}"
       - "{{ (host_count | int) <= 1 or ((host_count | int) > 1 and (host_count | int) % 2 != 0) }}"
     fail_msg: 'With high availability clusters you must have an odd quoram!'
 

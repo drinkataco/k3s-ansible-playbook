@@ -1,0 +1,17 @@
+
+---
+
+# Custom labels to apply to nodes
+# labels:
+#   lennon: # hostname
+#     type: 'pi5' # label as key value pair
+labels: {}
+
+# Taints to apply to nodes
+# taints:
+#   - host: 'martin'
+#     key: 'cpu'
+#     operator: 'Equal'
+#     value: 'x86'
+#     effect: 'NoSchedule'
+taints: []

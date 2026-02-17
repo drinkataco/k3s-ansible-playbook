@@ -1,0 +1,78 @@
+---
+
+- name: 'Check legacy cmdline path'
+  stat:
+    path: '/boot/cmdline.txt'
+  register: legacy_cmdline
+
+- name: 'Check new firmware cmdline path'
+  stat:
+    path: '/boot/firmware/cmdline.txt'
+  register: firmware_cmdline
+
+- name: 'Set cmdline path'
+  set_fact:
+    rpi_cmdline_path: "{{ '/boot/firmware/cmdline.txt' if firmware_cmdline.stat.exists else '/boot/cmdline.txt' }}"
+  when: legacy_cmdline.stat.exists or firmware_cmdline.stat.exists
+
+- name: 'Remove cgroup cpuset flag'
+  replace:
+    path: '{{ rpi_cmdline_path }}'
+    regexp: '\s*cgroup_enable=cpuset\b'
+    replace: ''
+  register: cpuset_flag_removed
+  when: legacy_cmdline.stat.exists or firmware_cmdline.stat.exists
+
+- name: 'Remove cgroup memory switch flag'
+  replace:
+    path: '{{ rpi_cmdline_path }}'
+    regexp: '\s*cgroup_memory=1\b'
+    replace: ''
+  register: cgroup_memory_flag_removed
+  when: legacy_cmdline.stat.exists or firmware_cmdline.stat.exists
+
+- name: 'Remove cgroup enable memory flag'
+  replace:
+    path: '{{ rpi_cmdline_path }}'
+    regexp: '\s*cgroup_enable=memory\b'
+    replace: ''
+  register: cgroup_enable_memory_flag_removed
+  when: legacy_cmdline.stat.exists or firmware_cmdline.stat.exists
+
+- name: 'Normalize extra whitespace in cmdline'
+  replace:
+    path: '{{ rpi_cmdline_path }}'
+    regexp: '\s+'
+    replace: ' '
+  when: legacy_cmdline.stat.exists or firmware_cmdline.stat.exists
+
+- name: 'Uncomment swap entries in fstab'
+  replace:
+    path: '/etc/fstab'
+    regexp: '^# (\s*[^#\n]+\s+\S+\s+swap\s+.*)$'
+    replace: '\1'
+
+- name: 'Collect running services'
+  service_facts:
+
+- name: 'Enable swap services when present'
+  systemd:
+    name: '{{ item }}'
+    enabled: true
+    state: started
+  loop:
+    - 'dphys-swapfile.service'
+    - 'zramswap.service'
+    - 'zram-config.service'
+    - 'systemd-swap.service'
+  when: item in ansible_facts.services
+
+- name: 'Turn swap back on for active fstab entries'
+  command: 'swapon -a'
+  changed_when: false
+
+- name: 'Reboot after cmdline changes'
+  reboot:
+  when:
+    - legacy_cmdline.stat.exists or firmware_cmdline.stat.exists
+    - cpuset_flag_removed.changed or cgroup_memory_flag_removed.changed or cgroup_enable_memory_flag_removed.changed

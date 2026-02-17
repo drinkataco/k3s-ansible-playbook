@@ -38,9 +38,11 @@
     state: 'unmounted'
   loop: '{{ device_mounts }}'
 
-- name: 'Ensure mount point directory is no longer immutable'
-  command: '/bin/bash -c "[ -d {{ item.path }} ] && chattr -i {{ item.path }}"'
-  loop: '{{ device_mounts }}'
+# TODO: allow crossmounts?
+#
+# - name: 'Ensure mount point directory is no longer immutable'
+  # command: '/bin/bash -c "[ -d {{ item.path }} ] && chattr -i {{ item.path }}"'
+  # loop: '{{ device_mounts }}'
 
 - name: "Make sure drives are absent and won't be remounted"
   ansible.posix.mount:

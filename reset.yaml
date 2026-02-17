@@ -23,7 +23,6 @@
 - name: 'Re-enable swap'
   hosts: 'all'
   become: true
-  roles:
-    - role: 'raspberrypi'
-      vars:
-        swapsize: 100
+  tasks:
+    - name: 'Restore Raspberry Pi prerequisites'
+      include_tasks: './roles/raspberrypi/tasks/uninstall.yaml'

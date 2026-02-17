@@ -30,9 +30,11 @@
     state: 'directory'
   loop: '{{ device_mounts }}'
 
-- name: 'Ensure mount point directory is immutable'
-  command: 'chattr +i {{ item.path }}'
-  loop: '{{ device_mounts }}'
+# TODO: allow crossmounts? - move me to last?
+# Reverse traverse?
+# - name: 'Ensure mount point directory is immutable'
+  # command: 'chattr +i {{ item.path }}'
+  # loop: '{{ device_mounts }}'
 
 - name: 'Mount Hardrives'
   ansible.posix.mount:

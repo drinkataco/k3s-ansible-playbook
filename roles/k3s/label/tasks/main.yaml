@@ -5,7 +5,7 @@
   ansible.builtin.shell:
     cmd: |
       kubectl label nodes {{ item.key }} model={{ item.value.model }} storage={{ item.value.storage }} --overwrite
-  loop: "{{ lookup('dict', labels) }}"
+  loop: "{{ lookup('dict', labels | default({}, true)) }}"
   loop_control:
     label: '{{ item.key }}'
 
@@ -13,4 +13,4 @@
   when: inventory_hostname == groups['master'][0]
   ansible.builtin.shell:
     cmd: "kubectl taint nodes {{ item.host }} {{ item.key }}{{ item.operator }}{{ item.value }}:{{ item.effect }} --overwrite"
-  loop: "{{ taints }}"
+  loop: "{{ taints | default([], true) }}"

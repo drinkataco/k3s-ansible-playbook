@@ -11,3 +11,9 @@
     name: 'iscsid'
     enabled: true
     state: 'started'
+
+- name: 'Ensure /longhorn directory exists'
+  ansible.builtin.file:
+    path: '/longhorn'
+    state: 'directory'
+    mode: '0755'

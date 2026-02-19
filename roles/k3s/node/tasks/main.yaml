@@ -1,5 +1,9 @@
 ---
 
+- name: 'Run shared K3s pre-install tasks'
+  ansible.builtin.include_role:
+    name: 'k3s/pre-install'
+
 - name: 'Set High Availability K3s cluster command if appropriate'
   set_fact:
     ha_node: 'sh -s - agent --server https://{{ groups["master"][0] }}:6443'

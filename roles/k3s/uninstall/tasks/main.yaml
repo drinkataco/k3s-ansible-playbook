@@ -19,3 +19,15 @@
   become: true
   raw: 'k3s-agent-uninstall.sh'
   when: 'k3s_agent_uninstall.stat.exists'
+
+- name: 'Stop and disable iscsid service'
+  ansible.builtin.service:
+    name: 'iscsid'
+    enabled: false
+    state: 'stopped'
+  failed_when: false
+
+- name: 'Remove open-iscsi'
+  ansible.builtin.apt:
+    name: 'open-iscsi'
+    state: 'absent'

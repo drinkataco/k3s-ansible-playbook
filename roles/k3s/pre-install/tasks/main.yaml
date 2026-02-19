@@ -1,0 +1,13 @@
+---
+
+- name: 'Install open-iscsi for Longhorn'
+  ansible.builtin.apt:
+    name: 'open-iscsi'
+    state: 'present'
+    update_cache: true
+
+- name: 'Ensure iscsid service is enabled and running'
+  ansible.builtin.service:
+    name: 'iscsid'
+    enabled: true
+    state: 'started'

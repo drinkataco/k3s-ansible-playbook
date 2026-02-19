@@ -1,5 +1,9 @@
 ---
 
+- name: 'Run shared K3s pre-install tasks'
+  ansible.builtin.include_role:
+    name: 'k3s/pre-install'
+
 - name: 'Set master count'
   set_fact:
     host_count: '{{ groups["master"] | length }}'

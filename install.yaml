@@ -15,6 +15,13 @@
     - 'mounts'
     - 'nfs'
 
+- name: 'K3s pre install steps'
+  hosts: 'master'
+  remote_user: '{{ ansible_user }}'
+  become: true
+  roles:
+    - 'k3s/pre-install'
+
 - name: 'Configure K3 Master'
   hosts: 'master'
   serial: 1

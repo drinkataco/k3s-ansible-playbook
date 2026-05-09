@@ -1,0 +1,17 @@
+---
+
+- name: 'Build Pi 4 kernel on Pi 5'
+  hosts: 'pi4_kernel_builder'
+  remote_user: '{{ ansible_user }}'
+  become: true
+  roles:
+    - role: 'compile_kernel_pi4'
+      tasks_from: 'main'
+
+- name: 'Deploy Pi 4 kernel'
+  hosts: 'pi4_kernel'
+  remote_user: '{{ ansible_user }}'
+  become: true
+  roles:
+    - role: 'compile_kernel_pi4'
+      tasks_from: 'deploy'

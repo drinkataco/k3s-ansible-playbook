@@ -1,0 +1,102 @@
+---
+
+- name: 'Check for cached kernel .deb on controller'
+  find:
+    paths: '{{ kernel_local_cache_dir }}'
+    patterns: 'linux-image-*{{ kernel_local_version }}*.deb'
+  register: cached_kernel_deb
+  delegate_to: localhost
+  become: false
+
+- name: 'Install kernel build dependencies'
+  package:
+    name:
+      - bc
+      - bison
+      - cpio
+      - flex
+      - git
+      - kmod
+      - libelf-dev
+      - libncurses-dev
+      - libssl-dev
+      - make
+      - python3
+      - rsync
+    state: present
+  when: cached_kernel_deb.matched == 0
+
+- name: 'Create build directory'
+  file:
+    path: '{{ kernel_build_dir }}'
+    state: directory
+    mode: '0755'
+  when: cached_kernel_deb.matched == 0
+
+- name: 'Clone RPi kernel source (shallow)'
+  git:
+    repo: '{{ kernel_source_repo }}'
+    dest: '{{ kernel_build_dir }}/linux'
+    version: '{{ kernel_source_branch }}'
+    depth: 1
+    single_branch: true
+  when: cached_kernel_deb.matched == 0
+
+- name: 'Suppress git dirty marker in kernel version string'
+  file:
+    path: '{{ kernel_build_dir }}/linux/.scmversion'
+    state: touch
+    modification_time: preserve
+    access_time: preserve
+  when: cached_kernel_deb.matched == 0
+
+- name: 'Apply base defconfig for Pi 4 (bcm2711)'
+  command: 'make {{ kernel_defconfig }}'
+  args:
+    chdir: '{{ kernel_build_dir }}/linux'
+  when: cached_kernel_deb.matched == 0
+
+- name: 'Apply kernel config overrides'
+  command: >-
+    ./scripts/config
+    --disable CONFIG_ARM64_VA_BITS_39
+    --enable  CONFIG_ARM64_VA_BITS_48
+    --enable  CONFIG_GENEVE
+  args:
+    chdir: '{{ kernel_build_dir }}/linux'
+  when: cached_kernel_deb.matched == 0
+
+- name: 'Resolve config dependencies'
+  command: 'make olddefconfig'
+  args:
+    chdir: '{{ kernel_build_dir }}/linux'
+  when: cached_kernel_deb.matched == 0
+
+- name: 'Build kernel (~20 minutes on Pi 5)'
+  command: 'make -j{{ ansible_processor_vcpus | default(4) }} bindeb-pkg LOCALVERSION={{ kernel_local_version }}'
+  args:
+    chdir: '{{ kernel_build_dir }}/linux'
+  when: cached_kernel_deb.matched == 0
+  async: 5400
+  poll: 30
+
+- name: 'Find built .deb packages'
+  find:
+    paths: '{{ kernel_build_dir }}'
+    patterns: '*.deb'
+  register: built_debs
+
+- name: 'Create local kernel cache directory on controller'
+  file:
+    path: '{{ kernel_local_cache_dir }}'
+    state: directory
+    mode: '0755'
+  delegate_to: localhost
+  become: false
+
+- name: 'Fetch .deb packages to controller'
+  fetch:
+    src: '{{ item.path }}'
+    dest: '{{ kernel_local_cache_dir }}/'
+    flat: true
+  loop: '{{ built_debs.files }}'

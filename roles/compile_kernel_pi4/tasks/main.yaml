@@ -1,5 +1,35 @@
 ---
 
+- name: 'Fetch remote HEAD commit for {{ kernel_source_branch }}'
+  command: 'git ls-remote {{ kernel_source_repo }} refs/heads/{{ kernel_source_branch }}'
+  register: remote_head_raw
+  changed_when: false
+  delegate_to: localhost
+  become: false
+
+- name: 'Parse remote commit hash'
+  set_fact:
+    kernel_remote_commit: "{{ remote_head_raw.stdout.split()[0] if remote_head_raw.stdout else 'unknown' }}"
+
+- name: 'Check for cached commit marker'
+  stat:
+    path: '{{ kernel_local_cache_dir }}/.built_commit_{{ kernel_local_version }}'
+  register: commit_marker
+  delegate_to: localhost
+  become: false
+
+- name: 'Read cached commit hash'
+  slurp:
+    src: '{{ kernel_local_cache_dir }}/.built_commit_{{ kernel_local_version }}'
+  register: cached_commit_file
+  delegate_to: localhost
+  become: false
+  when: commit_marker.stat.exists
+
+- name: 'Set cached commit fact'
+  set_fact:
+    kernel_cached_commit: "{{ (cached_commit_file.content | b64decode | trim) if commit_marker.stat.exists else '' }}"
+
 - name: 'Check for cached kernel .deb on controller'
   find:
     paths: '{{ kernel_local_cache_dir }}'
@@ -7,6 +37,15 @@
   register: cached_kernel_deb
   delegate_to: localhost
   become: false
+
+- name: 'Determine if rebuild is needed'
+  set_fact:
+    kernel_build_needed: "{{ kernel_remote_commit != kernel_cached_commit or cached_kernel_deb.matched == 0 }}"
+
+- name: 'Kernel build is up to date — skipping'
+  debug:
+    msg: 'Cached build matches upstream {{ kernel_source_branch }} @ {{ kernel_remote_commit[:12] }} — nothing to do'
+  when: not kernel_build_needed | bool
 
 - name: 'Install kernel build dependencies'
   package:
@@ -24,14 +63,14 @@
       - python3
       - rsync
     state: present
-  when: cached_kernel_deb.matched == 0
+  when: kernel_build_needed | bool
 
 - name: 'Create build directory'
   file:
     path: '{{ kernel_build_dir }}'
     state: directory
     mode: '0755'
-  when: cached_kernel_deb.matched == 0
+  when: kernel_build_needed | bool
 
 - name: 'Clone RPi kernel source (shallow)'
   git:
@@ -40,7 +79,7 @@
     version: '{{ kernel_source_branch }}'
     depth: 1
     single_branch: true
-  when: cached_kernel_deb.matched == 0
+  when: kernel_build_needed | bool
 
 - name: 'Suppress git dirty marker in kernel version string'
   file:
@@ -48,31 +87,31 @@
     state: touch
     modification_time: preserve
     access_time: preserve
-  when: cached_kernel_deb.matched == 0
+  when: kernel_build_needed | bool
 
 - name: 'Apply base defconfig'
   command: 'make {{ kernel_defconfig }}'
   args:
     chdir: '{{ kernel_build_dir }}/linux'
-  when: cached_kernel_deb.matched == 0
+  when: kernel_build_needed | bool
 
 - name: 'Apply kernel config overrides'
   shell: './scripts/config {{ kernel_config_args }}'
   args:
     chdir: '{{ kernel_build_dir }}/linux'
-  when: cached_kernel_deb.matched == 0
+  when: kernel_build_needed | bool
 
 - name: 'Resolve config dependencies'
   command: 'make olddefconfig'
   args:
     chdir: '{{ kernel_build_dir }}/linux'
-  when: cached_kernel_deb.matched == 0
+  when: kernel_build_needed | bool
 
 - name: 'Build kernel (~20 minutes on Pi 5)'
   command: 'make -j{{ ansible_processor_vcpus | default(4) }} bindeb-pkg LOCALVERSION={{ kernel_local_version }}'
   args:
     chdir: '{{ kernel_build_dir }}/linux'
-  when: cached_kernel_deb.matched == 0
+  when: kernel_build_needed | bool
   async: 5400
   poll: 30
 
@@ -81,6 +120,7 @@
     paths: '{{ kernel_build_dir }}'
     patterns: '*.deb'
   register: built_debs
+  when: kernel_build_needed | bool
 
 - name: 'Create local kernel cache directory on controller'
   file:
@@ -96,3 +136,12 @@
     dest: '{{ kernel_local_cache_dir }}/'
     flat: true
   loop: '{{ built_debs.files }}'
+  when: kernel_build_needed | bool
+
+- name: 'Record upstream commit hash for this build'
+  copy:
+    content: '{{ kernel_remote_commit }}'
+    dest: '{{ kernel_local_cache_dir }}/.built_commit_{{ kernel_local_version }}'
+  delegate_to: localhost
+  become: false
+  when: kernel_build_needed | bool

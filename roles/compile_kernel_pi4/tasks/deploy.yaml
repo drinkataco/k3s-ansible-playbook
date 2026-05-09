@@ -1,10 +1,40 @@
 ---
 
-- name: 'Check if custom kernel is already running'
-  shell: 'uname -r | grep -qF -- {{ kernel_local_version }}'
-  register: kernel_check
-  failed_when: false
-  changed_when: false
+- name: 'Read expected kernel hash from cache'
+  slurp:
+    src: '{{ kernel_local_cache_dir }}/.kernel_hash_{{ kernel_local_version }}'
+  register: expected_hash_raw
+  delegate_to: localhost
+  become: false
+  ignore_errors: true
+
+- name: 'Set expected hash'
+  set_fact:
+    kernel_expected_hash: "{{ (expected_hash_raw.content | b64decode | trim) if not (expected_hash_raw.failed | default(false)) else '' }}"
+
+- name: 'Assert build has been run'
+  assert:
+    that: kernel_expected_hash != ''
+    fail_msg: 'No kernel hash found in {{ kernel_local_cache_dir }} — run the build play first'
+
+- name: 'Read deployed kernel hash from target'
+  slurp:
+    src: '/boot/firmware/.kernel_build_hash'
+  register: deployed_hash_raw
+  ignore_errors: true
+
+- name: 'Set deployed hash'
+  set_fact:
+    kernel_deployed_hash: "{{ (deployed_hash_raw.content | b64decode | trim) if not (deployed_hash_raw.failed | default(false)) else '' }}"
+
+- name: 'Determine if deploy is needed'
+  set_fact:
+    kernel_deploy_needed: "{{ kernel_deployed_hash != kernel_expected_hash }}"
+
+- name: 'Kernel is already up to date'
+  debug:
+    msg: 'Kernel on {{ inventory_hostname }} matches build hash — nothing to do'
+  when: not kernel_deploy_needed | bool
 
 - name: 'Find .deb packages in local cache'
   find:
@@ -13,47 +43,47 @@
   register: cached_debs
   delegate_to: localhost
   become: false
-  when: kernel_check.rc != 0
+  when: kernel_deploy_needed | bool
 
 - name: 'Assert kernel cache is not empty'
   assert:
     that: cached_debs.matched > 0
     fail_msg: 'No kernel .deb packages found in {{ kernel_local_cache_dir }} — run the build play first'
-  when: kernel_check.rc != 0
+  when: kernel_deploy_needed | bool
 
 - name: 'Create temp directory for packages'
   file:
     path: '/tmp/kernel-debs'
     state: directory
     mode: '0755'
-  when: kernel_check.rc != 0
+  when: kernel_deploy_needed | bool
 
 - name: 'Upload kernel packages to target'
   copy:
     src: '{{ item.path }}'
     dest: '/tmp/kernel-debs/'
   loop: '{{ cached_debs.files }}'
-  when: kernel_check.rc != 0
+  when: kernel_deploy_needed | bool
 
 - name: 'Install kernel packages'
   apt:
     deb: '/tmp/kernel-debs/{{ item.path | basename }}'
   loop: '{{ cached_debs.files }}'
-  when: kernel_check.rc != 0
+  when: kernel_deploy_needed | bool
 
 - name: 'Find installed kernel image'
   find:
     paths: '/boot'
     patterns: 'vmlinuz-*{{ kernel_local_version }}*'
   register: kernel_vmlinuz
-  when: kernel_check.rc != 0
+  when: kernel_deploy_needed | bool
 
 - name: 'Find installed initrd'
   find:
     paths: '/boot'
     patterns: 'initrd.img-*{{ kernel_local_version }}*'
   register: kernel_initrd
-  when: kernel_check.rc != 0
+  when: kernel_deploy_needed | bool
 
 - name: 'Back up existing boot kernel'
   copy:
@@ -61,37 +91,43 @@
     dest: '/boot/firmware/{{ kernel_boot_image }}.bak'
     remote_src: true
     force: false
-  when: kernel_check.rc != 0
+  when: kernel_deploy_needed | bool
 
 - name: 'Deploy kernel to firmware boot partition'
   copy:
     src: '{{ (kernel_vmlinuz.files | sort(attribute="mtime") | last).path }}'
     dest: '/boot/firmware/{{ kernel_boot_image }}'
     remote_src: true
-  when: kernel_check.rc != 0 and kernel_vmlinuz.matched > 0
+  when: kernel_deploy_needed | bool and kernel_vmlinuz.matched > 0
 
 - name: 'Deploy initrd to firmware boot partition'
   copy:
     src: '{{ (kernel_initrd.files | sort(attribute="mtime") | last).path }}'
     dest: '/boot/firmware/initrd.img'
     remote_src: true
-  when: kernel_check.rc != 0 and kernel_initrd.matched > 0
+  when: kernel_deploy_needed | bool and kernel_initrd.matched > 0
 
 - name: 'Enable initramfs in firmware config'
   lineinfile:
     path: '/boot/firmware/config.txt'
     regexp: '^initramfs'
     line: 'initramfs initrd.img followkernel'
-  when: kernel_check.rc != 0
+  when: kernel_deploy_needed | bool
 
 - name: 'Reboot to new kernel'
   reboot:
     reboot_timeout: 300
-  when: kernel_check.rc != 0
+  when: kernel_deploy_needed | bool
 
 - name: 'Refresh facts after reboot'
   setup:
-  when: kernel_check.rc != 0
+  when: kernel_deploy_needed | bool
+
+- name: 'Record deployed kernel hash on target'
+  copy:
+    content: '{{ kernel_expected_hash }}'
+    dest: '/boot/firmware/.kernel_build_hash'
+  when: kernel_deploy_needed | bool
 
 - name: 'Verify GENEVE is enabled in running kernel'
   shell: 'grep -E "CONFIG_GENEVE=[ym]" /boot/config-$(uname -r)'

@@ -1,8 +1,8 @@
 ---
 
 - name: 'Check if custom kernel is already running'
-  command: 'grep -q CONFIG_ARM64_VA_BITS=48 /boot/config-{{ ansible_kernel }}'
-  register: kernel_va_check
+  shell: 'uname -r | grep -qF -- {{ kernel_local_version }}'
+  register: kernel_check
   failed_when: false
   changed_when: false
 
@@ -13,93 +13,106 @@
   register: cached_debs
   delegate_to: localhost
   become: false
-  when: kernel_va_check.rc != 0
+  when: kernel_check.rc != 0
 
 - name: 'Assert kernel cache is not empty'
   assert:
     that: cached_debs.matched > 0
     fail_msg: 'No kernel .deb packages found in {{ kernel_local_cache_dir }} — run the build play first'
-  when: kernel_va_check.rc != 0
+  when: kernel_check.rc != 0
 
 - name: 'Create temp directory for packages'
   file:
     path: '/tmp/kernel-debs'
     state: directory
     mode: '0755'
-  when: kernel_va_check.rc != 0
+  when: kernel_check.rc != 0
 
 - name: 'Upload kernel packages to target'
   copy:
     src: '{{ item.path }}'
     dest: '/tmp/kernel-debs/'
   loop: '{{ cached_debs.files }}'
-  when: kernel_va_check.rc != 0
+  when: kernel_check.rc != 0
 
 - name: 'Install kernel packages'
   apt:
     deb: '/tmp/kernel-debs/{{ item.path | basename }}'
   loop: '{{ cached_debs.files }}'
-  when: kernel_va_check.rc != 0
+  when: kernel_check.rc != 0
 
 - name: 'Find installed kernel image'
   find:
     paths: '/boot'
     patterns: 'vmlinuz-*{{ kernel_local_version }}*'
   register: kernel_vmlinuz
-  when: kernel_va_check.rc != 0
+  when: kernel_check.rc != 0
 
 - name: 'Find installed initrd'
   find:
     paths: '/boot'
     patterns: 'initrd.img-*{{ kernel_local_version }}*'
   register: kernel_initrd
-  when: kernel_va_check.rc != 0
+  when: kernel_check.rc != 0
 
-- name: 'Back up existing kernel'
+- name: 'Back up existing boot kernel'
   copy:
-    src: '/boot/firmware/kernel8.img'
-    dest: '/boot/firmware/kernel8.img.bak'
+    src: '/boot/firmware/{{ kernel_boot_image }}'
+    dest: '/boot/firmware/{{ kernel_boot_image }}.bak'
     remote_src: true
     force: false
-  when: kernel_va_check.rc != 0
+  when: kernel_check.rc != 0
 
 - name: 'Deploy kernel to firmware boot partition'
   copy:
     src: '{{ (kernel_vmlinuz.files | sort(attribute="mtime") | last).path }}'
-    dest: '/boot/firmware/kernel8.img'
+    dest: '/boot/firmware/{{ kernel_boot_image }}'
     remote_src: true
-  when: kernel_va_check.rc != 0 and kernel_vmlinuz.matched > 0
+  when: kernel_check.rc != 0 and kernel_vmlinuz.matched > 0
 
 - name: 'Deploy initrd to firmware boot partition'
   copy:
     src: '{{ (kernel_initrd.files | sort(attribute="mtime") | last).path }}'
     dest: '/boot/firmware/initrd.img'
     remote_src: true
-  when: kernel_va_check.rc != 0 and kernel_initrd.matched > 0
+  when: kernel_check.rc != 0 and kernel_initrd.matched > 0
 
 - name: 'Enable initramfs in firmware config'
   lineinfile:
     path: '/boot/firmware/config.txt'
     regexp: '^initramfs'
     line: 'initramfs initrd.img followkernel'
-  when: kernel_va_check.rc != 0
+  when: kernel_check.rc != 0
 
 - name: 'Reboot to new kernel'
   reboot:
     reboot_timeout: 300
-  when: kernel_va_check.rc != 0
+  when: kernel_check.rc != 0
 
 - name: 'Refresh facts after reboot'
   setup:
-  when: kernel_va_check.rc != 0
+  when: kernel_check.rc != 0
+
+- name: 'Verify GENEVE is enabled in running kernel'
+  shell: 'grep -E "CONFIG_GENEVE=[ym]" /boot/config-$(uname -r)'
+  register: geneve_check
+  changed_when: false
+
+- name: 'Assert GENEVE is enabled'
+  assert:
+    that: geneve_check.rc == 0
+    fail_msg: 'CONFIG_GENEVE not found in running kernel config'
+    success_msg: 'Custom kernel running with GENEVE enabled'
 
 - name: 'Verify 48-bit VA is active'
-  shell: 'grep CONFIG_ARM64_VA_BITS= /boot/config-$(uname -r)'
-  register: va_bits_result
+  shell: 'grep -q CONFIG_ARM64_VA_BITS=48 /boot/config-$(uname -r)'
+  register: va_check
   changed_when: false
+  when: kernel_verify_va | default(false)
 
 - name: 'Assert 48-bit VA'
   assert:
-    that: "'CONFIG_ARM64_VA_BITS=48' in va_bits_result.stdout"
-    fail_msg: 'Expected 48-bit VA but got: {{ va_bits_result.stdout }}'
-    success_msg: 'Pi 4 now running with 48-bit VA kernel'
+    that: va_check.rc == 0
+    fail_msg: 'Expected CONFIG_ARM64_VA_BITS=48 in running kernel'
+    success_msg: 'Pi 4 running with 48-bit VA'
+  when: kernel_verify_va | default(false)

@@ -1,0 +1,3 @@
+---
+
+- include_tasks: '{{ playbook_dir }}/roles/compile_kernel_pi4/tasks/main.yaml'

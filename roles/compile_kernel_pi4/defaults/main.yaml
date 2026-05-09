@@ -6,3 +6,6 @@ kernel_defconfig: 'bcm2711_defconfig'
 kernel_build_dir: '/opt/kernel-build/pi4'
 kernel_local_cache_dir: "{{ playbook_dir }}/kernel-cache"
 kernel_local_version: '-v8-48bit'
+kernel_boot_image: 'kernel8.img'
+kernel_verify_va: true
+kernel_config_args: '--disable CONFIG_ARM64_VA_BITS_39 --enable CONFIG_ARM64_VA_BITS_48 --enable CONFIG_GENEVE'

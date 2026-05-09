@@ -50,18 +50,14 @@
     access_time: preserve
   when: cached_kernel_deb.matched == 0
 
-- name: 'Apply base defconfig for Pi 4 (bcm2711)'
+- name: 'Apply base defconfig'
   command: 'make {{ kernel_defconfig }}'
   args:
     chdir: '{{ kernel_build_dir }}/linux'
   when: cached_kernel_deb.matched == 0
 
 - name: 'Apply kernel config overrides'
-  command: >-
-    ./scripts/config
-    --disable CONFIG_ARM64_VA_BITS_39
-    --enable  CONFIG_ARM64_VA_BITS_48
-    --enable  CONFIG_GENEVE
+  shell: './scripts/config {{ kernel_config_args }}'
   args:
     chdir: '{{ kernel_build_dir }}/linux'
   when: cached_kernel_deb.matched == 0

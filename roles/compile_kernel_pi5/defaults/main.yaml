@@ -1,0 +1,11 @@
+---
+
+kernel_source_repo: 'https://github.com/raspberrypi/linux'
+kernel_source_branch: 'rpi-6.12.y'
+kernel_defconfig: 'bcm2712_defconfig'
+kernel_build_dir: '/opt/kernel-build/pi5'
+kernel_local_cache_dir: "{{ playbook_dir }}/kernel-cache"
+kernel_local_version: '-rpi5-geneve'
+kernel_boot_image: 'kernel_2712.img'
+kernel_verify_va: false
+kernel_config_args: '--enable CONFIG_GENEVE'

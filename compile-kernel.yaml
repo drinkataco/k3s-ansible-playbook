@@ -1,5 +1,8 @@
 ---
 
+# Builds run sequentially on lovelace — two concurrent kernel builds on the
+# same host would contend for the same 4 cores and risk OOM.
+
 - name: 'Build Pi 4 kernel on Pi 5'
   hosts: 'pi4_kernel_builder'
   remote_user: '{{ ansible_user }}'
@@ -8,10 +11,26 @@
     - role: 'compile_kernel_pi4'
       tasks_from: 'main'
 
+- name: 'Build Pi 5 kernel'
+  hosts: 'pi5_kernel_builder'
+  remote_user: '{{ ansible_user }}'
+  become: true
+  roles:
+    - role: 'compile_kernel_pi5'
+      tasks_from: 'main'
+
 - name: 'Deploy Pi 4 kernel'
   hosts: 'pi4_kernel'
   remote_user: '{{ ansible_user }}'
   become: true
   roles:
     - role: 'compile_kernel_pi4'
+      tasks_from: 'deploy'
+
+- name: 'Deploy Pi 5 kernel'
+  hosts: 'pi5_kernel'
+  remote_user: '{{ ansible_user }}'
+  become: true
+  roles:
+    - role: 'compile_kernel_pi5'
       tasks_from: 'deploy'

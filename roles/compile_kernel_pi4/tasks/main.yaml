@@ -8,21 +8,33 @@
   delegate_to: localhost
   become: false
 
-- name: 'Check for cached kernel hash'
+- name: 'Check for cached kernel hash on controller'
   stat:
     path: '{{ kernel_local_cache_dir }}/.kernel_hash_{{ kernel_local_version }}'
   register: cached_hash_stat
   delegate_to: localhost
   become: false
 
-- name: 'Determine if build is needed'
-  set_fact:
-    kernel_build_needed: "{{ cached_kernel_deb.matched == 0 or not cached_hash_stat.stat.exists }}"
+- name: 'Check for existing .deb on build host (e.g. previous interrupted run)'
+  find:
+    paths: '{{ kernel_build_dir }}'
+    patterns: 'linux-image-*{{ kernel_local_version }}*.deb'
+  register: build_host_deb
 
-- name: 'Kernel cache is current — skipping build'
+- name: 'Determine if build and/or fetch are needed'
+  set_fact:
+    kernel_build_needed: "{{ cached_kernel_deb.matched == 0 and build_host_deb.matched == 0 }}"
+    kernel_fetch_needed: "{{ cached_kernel_deb.matched == 0 or not cached_hash_stat.stat.exists }}"
+
+- name: 'Kernel cache is current — skipping build and fetch'
   debug:
     msg: 'Cached .deb and hash already exist for {{ kernel_local_version }}'
-  when: not kernel_build_needed | bool
+  when: not kernel_build_needed | bool and not kernel_fetch_needed | bool
+
+- name: 'Build host has existing .deb — skipping build, will fetch'
+  debug:
+    msg: 'Found existing .deb on build host from a previous run — skipping compilation'
+  when: not kernel_build_needed | bool and kernel_fetch_needed | bool
 
 - name: 'Install kernel build dependencies'
   package:
@@ -98,12 +110,12 @@
   async: 5400
   poll: 30
 
-- name: 'Find built .deb packages'
+- name: 'Find .deb packages on build host'
   find:
     paths: '{{ kernel_build_dir }}'
     patterns: '*.deb'
   register: built_debs
-  when: kernel_build_needed | bool
+  when: kernel_fetch_needed | bool
 
 - name: 'Create local kernel cache directory on controller'
   file:
@@ -119,7 +131,7 @@
     dest: '{{ kernel_local_cache_dir }}/'
     flat: true
   loop: '{{ built_debs.files }}'
-  when: kernel_build_needed | bool
+  when: kernel_fetch_needed | bool
 
 - name: 'Find linux-image .deb in local cache'
   find:
@@ -128,7 +140,7 @@
   register: cached_image_deb
   delegate_to: localhost
   become: false
-  when: kernel_build_needed | bool
+  when: kernel_fetch_needed | bool
 
 - name: 'Compute hash of linux-image .deb'
   stat:
@@ -138,7 +150,7 @@
   register: kernel_deb_stat
   delegate_to: localhost
   become: false
-  when: kernel_build_needed | bool and cached_image_deb.matched > 0
+  when: kernel_fetch_needed | bool and cached_image_deb.matched > 0
 
 - name: 'Write build hash to cache'
   copy:
@@ -146,4 +158,4 @@
     dest: '{{ kernel_local_cache_dir }}/.kernel_hash_{{ kernel_local_version }}'
   delegate_to: localhost
   become: false
-  when: kernel_build_needed | bool and cached_image_deb.matched > 0
+  when: kernel_fetch_needed | bool and cached_image_deb.matched > 0

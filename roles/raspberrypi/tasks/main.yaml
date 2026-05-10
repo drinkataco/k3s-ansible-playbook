@@ -64,8 +64,17 @@
 
 - name: 'Check if rpi-swap is installed (Trixie+)'
   stat:
+    path: '/etc/rpi/swap.conf'
+  register: rpi_swap_conf
+
+- name: 'Create rpi-swap drop-in directory (Trixie+)'
+  file:
     path: '/etc/rpi/swap.conf.d'
-  register: rpi_swap_conf_dir
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: rpi_swap_conf.stat.exists
 
 - name: 'Disable swap via rpi-swap config (Trixie+)'
   copy:
@@ -76,4 +85,4 @@
     owner: root
     group: root
     mode: '0644'
-  when: rpi_swap_conf_dir.stat.exists
+  when: rpi_swap_conf.stat.exists

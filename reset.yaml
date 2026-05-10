@@ -6,23 +6,23 @@
   roles:
     - 'k3s/uninstall'
 
-- name: 'Remove NFS server'
-  hosts: 'fileserver'
-  become: true
-  tasks:
-    - name: 'Remove NFS'
-      include_tasks: './roles/nfs/tasks/uninstall.yaml'
+# - name: 'Remove NFS server'
+#   hosts: 'fileserver'
+#   become: true
+#   tasks:
+#     - name: 'Remove NFS'
+#       include_tasks: './roles/nfs/tasks/uninstall.yaml'
 
-- name: 'Unmount Drives'
-  hosts: 'fileserver'
-  become: true
-  tasks:
-    - name: 'Unmount all'
-      include_tasks: './roles/mounts/tasks/unmount.yaml'
+# - name: 'Unmount Drives'
+#   hosts: 'fileserver'
+#   become: true
+#   tasks:
+#     - name: 'Unmount all'
+#       include_tasks: './roles/mounts/tasks/unmount.yaml'
 
-- name: 'Re-enable swap'
-  hosts: 'all'
-  become: true
-  tasks:
-    - name: 'Restore Raspberry Pi prerequisites'
-      include_tasks: './roles/raspberrypi/tasks/uninstall.yaml'
+# - name: 'Re-enable swap'
+#   hosts: 'all'
+#   become: true
+#   tasks:
+#     - name: 'Restore Raspberry Pi prerequisites'
+#       include_tasks: './roles/raspberrypi/tasks/uninstall.yaml'

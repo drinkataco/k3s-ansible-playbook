@@ -17,3 +17,16 @@
     path: '/longhorn'
     state: 'directory'
     mode: '0755'
+
+- name: 'Ensure /opt/cni parent directory exists'
+  ansible.builtin.file:
+    path: '/opt/cni'
+    state: 'directory'
+    mode: '0755'
+
+- name: 'Symlink /opt/cni/bin to Cilium CNI install path'
+  ansible.builtin.file:
+    src: '/usr/libexec/cni'
+    dest: '/opt/cni/bin'
+    state: link
+    force: true

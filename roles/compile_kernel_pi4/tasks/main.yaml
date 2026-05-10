@@ -62,9 +62,17 @@
   when: kernel_build_needed | bool
 
 - name: 'Remove stale .deb packages from build directory'
-  shell: 'rm -f {{ kernel_build_dir }}/*.deb'
-  args:
-    warn: false
+  ansible.builtin.find:
+    paths: '{{ kernel_build_dir }}'
+    patterns: '*.deb'
+  register: stale_debs
+  when: kernel_build_needed | bool
+
+- name: 'Delete stale .deb packages from build directory'
+  ansible.builtin.file:
+    path: '{{ item.path }}'
+    state: absent
+  loop: '{{ stale_debs.files }}'
   when: kernel_build_needed | bool
 
 - name: 'Clone RPi kernel source (shallow)'

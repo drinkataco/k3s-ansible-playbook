@@ -10,6 +10,7 @@ Build a high availability kubernetes cluster on your Raspberry Pi computers with
   * [Getting Started](#getting-started)
   * [Deploying](#deploying)
   * [Post Deployment](#post-deployment)
+* [Custom Kernel](#custom-kernel)
 * [Next Steps](#next-steps)
 <!-- vim-md-toc END -->
 
@@ -97,6 +98,34 @@ lennon      Ready    <none>                 2m20s   v1.27.4+k3s1
 harrison    Ready    <none>                 2m20s   v1.27.4+k3s1
 starr       Ready    <none>                 2m36s   v1.27.4+k3s1
 ```
+
+## Custom Kernel
+
+Some workloads require kernel features not present in the default Raspberry Pi OS kernel. Two known cases for this cluster:
+
+- **48-bit virtual address space (Pi 4 only)** — the default Pi 4 kernel uses a 39-bit VA space. Certain memory allocators (including TCMalloc, used by Cilium Envoy) assume a minimum 48-bit VA and will crash on 39-bit kernels. Compiling with `CONFIG_ARM64_VA_BITS_48=y` resolves this.
+- **GENEVE tunnel support** — Cilium can use GENEVE as its overlay tunnel protocol, but `CONFIG_GENEVE` is not enabled in the default kernel.
+
+The `compile-kernel.yaml` playbook handles building and deploying a custom kernel. It compiles on a designated build host (to avoid doing a 20-minute compile on every node) and deploys the resulting `.deb` package to target nodes. Builds are skipped when the cached kernel is already up to date, and deployments are skipped when the running kernel matches the build hash.
+
+### Host groups
+
+Add hosts to the relevant groups in your inventory:
+
+| Group | Purpose |
+|---|---|
+| `pi4_kernel_builder` | Node that compiles the Pi 4 kernel (a Pi 5 is ideal for speed) |
+| `pi4_kernel` | Pi 4 nodes to deploy the compiled kernel to |
+| `pi5_kernel_builder` | Node that compiles the Pi 5 kernel |
+| `pi5_kernel` | Pi 5 nodes to deploy the compiled kernel to |
+
+### Running
+
+```bash
+ansible-playbook -i inventory/your-cluster compile-kernel.yaml
+```
+
+The playbook runs the build and deploy phases in sequence. You can safely re-run it at any time — if the kernel cache is current and the target nodes are already running the latest build, all tasks will be skipped.
 
 ## Next Steps
 

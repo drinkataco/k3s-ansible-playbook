@@ -18,11 +18,17 @@
     state: 'directory'
     mode: '0755'
 
+- name: 'Check /opt/cni/bin state'
+  ansible.builtin.stat:
+    path: '/opt/cni/bin'
+  register: cni_bin_stat
+
 - name: 'Ensure /opt/cni parent directory exists'
   ansible.builtin.file:
     path: '/opt/cni'
     state: 'directory'
     mode: '0755'
+  when: not cni_bin_stat.stat.exists
 
 - name: 'Symlink /opt/cni/bin to Cilium CNI install path'
   ansible.builtin.file:
@@ -30,3 +36,4 @@
     dest: '/opt/cni/bin'
     state: link
     force: true
+  when: not cni_bin_stat.stat.exists or cni_bin_stat.stat.islnk

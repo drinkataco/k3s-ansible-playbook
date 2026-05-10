@@ -1,8 +1,10 @@
 ---
 
-- name: 'Install open-iscsi for Longhorn'
+- name: 'Install cluster node dependencies'
   ansible.builtin.apt:
-    name: 'open-iscsi'
+    name:
+      - 'nfs-common'
+      - 'open-iscsi'
     state: 'present'
     update_cache: true
 

@@ -49,6 +49,12 @@
     mode: '0755'
   when: kernel_build_needed | bool
 
+- name: 'Remove stale .deb packages from build directory'
+  shell: 'rm -f {{ kernel_build_dir }}/*.deb'
+  args:
+    warn: false
+  when: kernel_build_needed | bool
+
 - name: 'Clone RPi kernel source (shallow)'
   git:
     repo: '{{ kernel_source_repo }}'

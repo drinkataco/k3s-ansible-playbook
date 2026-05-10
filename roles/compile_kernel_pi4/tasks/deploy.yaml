@@ -36,19 +36,19 @@
     msg: 'Kernel on {{ inventory_hostname }} matches build hash — nothing to do'
   when: not kernel_deploy_needed | bool
 
-- name: 'Find .deb packages in local cache'
+- name: 'Find linux-image .deb in local cache'
   find:
     paths: '{{ kernel_local_cache_dir }}'
-    patterns: '*.deb'
+    patterns: 'linux-image-*{{ kernel_local_version }}*.deb'
   register: cached_debs
   delegate_to: localhost
   become: false
   when: kernel_deploy_needed | bool
 
-- name: 'Assert kernel cache is not empty'
+- name: 'Assert linux-image .deb is present'
   assert:
     that: cached_debs.matched > 0
-    fail_msg: 'No kernel .deb packages found in {{ kernel_local_cache_dir }} — run the build play first'
+    fail_msg: 'No linux-image .deb found in {{ kernel_local_cache_dir }} — run the build play first'
   when: kernel_deploy_needed | bool
 
 - name: 'Create temp directory for packages'

@@ -110,12 +110,12 @@
     chdir: '{{ kernel_build_dir }}/linux'
   when: kernel_build_needed | bool
 
-- name: 'Build kernel (~20 minutes on Pi 5)'
+- name: 'Build kernel (~50 minutes on Pi 5)'
   command: 'make -j{{ ansible_processor_vcpus | default(4) }} bindeb-pkg LOCALVERSION={{ kernel_local_version }}'
   args:
     chdir: '{{ kernel_build_dir }}/linux'
   when: kernel_build_needed | bool
-  async: 5400
+  async: 10800
   poll: 30
 
 - name: 'Find .deb packages on build host'

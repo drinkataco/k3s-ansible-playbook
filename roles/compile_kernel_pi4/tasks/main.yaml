@@ -42,9 +42,11 @@
       - bc
       - bison
       - cpio
+      - debhelper
       - flex
       - git
       - kmod
+      - libdw-dev
       - libelf-dev
       - libncurses-dev
       - libssl-dev

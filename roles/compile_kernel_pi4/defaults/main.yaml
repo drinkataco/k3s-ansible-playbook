@@ -1,7 +1,7 @@
 ---
 
 kernel_source_repo: 'https://github.com/raspberrypi/linux'
-kernel_source_branch: 'rpi-6.12.y'
+kernel_source_branch: 'rpi-6.18.y'
 kernel_defconfig: 'bcm2711_defconfig'
 kernel_build_dir: '/opt/kernel-build/pi4'
 kernel_local_cache_dir: "{{ playbook_dir }}/kernel-cache"

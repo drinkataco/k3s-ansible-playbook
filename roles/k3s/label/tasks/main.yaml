@@ -4,7 +4,7 @@
   when: inventory_hostname == groups['master'][0]
   ansible.builtin.shell:
     cmd: |
-      kubectl label nodes {{ item.key }} model={{ item.value.model }} storage={{ item.value.storage }} --overwrite
+      kubectl label nodes {{ item.key }} {{ item.value.items() | map('join', '=') | join(' ') }} --overwrite
   loop: "{{ lookup('dict', labels | default({}, true)) }}"
   loop_control:
     label: '{{ item.key }}'
